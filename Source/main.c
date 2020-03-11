@@ -36,10 +36,18 @@ uint16_t time_medium = 4;
 uint16_t time_ex_large = 6;
 uint16_t new_num_click = 0;
 
+// variables for sound
 fir_8 filt;
 bool output_sound = true;
 int timer_for_sound = 0;
 bool start_sound_timer = false;
+
+// variables for servo
+const uint32_t VALVE_OFF = 001;
+const uint32_t VALVE_ESPRESSO = 1000;
+const uint32_t VALVE_MILK = 1500;
+const uint32_t VALVE_CHOCO = 2100;
+uint32_t curValvePos = VALVE_OFF;
 
 void initSound(void);
 float updateFilter(fir_8* filt, float val);
@@ -75,6 +83,8 @@ void vServoTask(void *pvParameters);
 
 #define STACK_SIZE_MIN	128	/* usStackDepth	- the stack size DEFINED IN WORDS (4 bytes).*/
 
+TaskHandle_t xHandleBlue = NULL;
+
 //******************************************************************************
 int main(void)
 {
@@ -106,8 +116,8 @@ int main(void)
 	InitPWMTimer4();
 	SetupPWM();
 	
-//	xTaskCreate( vLedBlinkBlue, (const char*)"Led Blink Task Blue", 
-//		STACK_SIZE_MIN, NULL, tskIDLE_PRIORITY, NULL );
+	xTaskCreate( vLedBlinkBlue, (const char*)"Led Blink Task Blue", 
+		STACK_SIZE_MIN, NULL, tskIDLE_PRIORITY, &xHandleBlue );
 //	xTaskCreate( vLedBlinkRed, (const char*)"Led Blink Task Red", 
 //		STACK_SIZE_MIN, NULL, tskIDLE_PRIORITY, NULL );
 //	xTaskCreate( vLedBlinkGreen, (const char*)"Led Blink Task Green", 
@@ -116,10 +126,10 @@ int main(void)
 //		STACK_SIZE_MIN, NULL, tskIDLE_PRIORITY, NULL );
 	xTaskCreate( vButtonTask, (const char*)"Button Task",
 		STACK_SIZE_MIN, NULL, tskIDLE_PRIORITY, NULL);
-	xTaskCreate( vSoundTask, (const char*)"Sound Task",
-		STACK_SIZE_MIN, NULL, tskIDLE_PRIORITY, NULL);
-	xTaskCreate( vServoTask, (const char*)"Servo Task",
-		STACK_SIZE_MIN, NULL, tskIDLE_PRIORITY, NULL);
+//	xTaskCreate( vSoundTask, (const char*)"Sound Task",
+//		STACK_SIZE_MIN, NULL, tskIDLE_PRIORITY, NULL);
+//	xTaskCreate( vServoTask, (const char*)"Servo Task",
+//		STACK_SIZE_MIN, NULL, tskIDLE_PRIORITY, NULL);
 	
 	vTaskStartScheduler();
 }
@@ -129,7 +139,7 @@ void vLedBlinkBlue(void *pvParameters)
 	for(;;)
 	{
 		STM_EVAL_LEDToggle(LED_BLUE);
-		vTaskDelay( 1000 / portTICK_RATE_MS );
+		vTaskDelay( 100 / portTICK_RATE_MS );
 	}
 }
 
@@ -162,11 +172,29 @@ void vLedBlinkOrange(void *pvParameters)
 
 void vButtonTask(void *pvParameters)
 {
+//	bool cancelled = false;
+//	for(;;)
+//	{
+//		if (STM_EVAL_PBGetState(BUTTON_USER)) 
+//		{
+//			if(!cancelled) {
+//				cancelled = true;
+//				// suspend the task that point to its task handle pointer
+//				vTaskSuspend(xHandleBlue);
+//			} else {
+//				cancelled = false;
+//				vTaskResume(xHandleBlue);
+//			}
+//		}
+//	}
 	while(1) {
 		if (STM_EVAL_PBGetState(BUTTON_USER)) {
 			output_sound = true;
-		} else
+			curValvePos = VALVE_ESPRESSO;
+		} else {
 			output_sound = false;
+			curValvePos = VALVE_OFF;
+		}
 	}
 }
 
@@ -197,13 +225,7 @@ void vSoundTask(void *pvParameters) {
 
 void vServoTask(void *pvParameters) {
 	while(1) {
-		//only control one servo at timer 4, channel 1
-		TIM4->CCR1 = 001; // 0.6 ms
-		vTaskDelay( 1000 / portTICK_RATE_MS );
-		TIM4->CCR1 = 1300; // 1.5 ms
-		vTaskDelay( 1000 / portTICK_RATE_MS );
-		TIM4->CCR1 = 2200; // 2.1 ms
-		vTaskDelay( 1000 / portTICK_RATE_MS );
+		TIM4->CCR1 = curValvePos;
 	}
 }
 
