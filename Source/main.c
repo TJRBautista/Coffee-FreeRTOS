@@ -84,6 +84,7 @@ void vServoTask(void *pvParameters);
 #define STACK_SIZE_MIN	128	/* usStackDepth	- the stack size DEFINED IN WORDS (4 bytes).*/
 
 TaskHandle_t xHandleBlue = NULL;
+TaskHandle_t xHandleSound = NULL;
 
 //******************************************************************************
 int main(void)
@@ -108,16 +109,16 @@ int main(void)
 	STM_EVAL_LEDInit(LED_ORANGE);
 	STM_EVAL_LEDInit(LED_RED);
 	STM_EVAL_PBInit(BUTTON_USER, BUTTON_MODE_GPIO);
+	
 	initSound();
 	initFilter(&filt);
 	
-//	setSysTick();
 	initServo();
 	InitPWMTimer4();
 	SetupPWM();
 	
-	xTaskCreate( vLedBlinkBlue, (const char*)"Led Blink Task Blue", 
-		STACK_SIZE_MIN, NULL, tskIDLE_PRIORITY, &xHandleBlue );
+//	xTaskCreate( vLedBlinkBlue, (const char*)"Led Blink Task Blue", 
+//		STACK_SIZE_MIN, NULL, tskIDLE_PRIORITY, &xHandleBlue );
 //	xTaskCreate( vLedBlinkRed, (const char*)"Led Blink Task Red", 
 //		STACK_SIZE_MIN, NULL, tskIDLE_PRIORITY, NULL );
 //	xTaskCreate( vLedBlinkGreen, (const char*)"Led Blink Task Green", 
@@ -125,11 +126,11 @@ int main(void)
 //	xTaskCreate( vLedBlinkOrange, (const char*)"Led Blink Task Orange", 
 //		STACK_SIZE_MIN, NULL, tskIDLE_PRIORITY, NULL );
 	xTaskCreate( vButtonTask, (const char*)"Button Task",
-		STACK_SIZE_MIN, NULL, tskIDLE_PRIORITY, NULL);
-//	xTaskCreate( vSoundTask, (const char*)"Sound Task",
-//		STACK_SIZE_MIN, NULL, tskIDLE_PRIORITY, NULL);
-//	xTaskCreate( vServoTask, (const char*)"Servo Task",
-//		STACK_SIZE_MIN, NULL, tskIDLE_PRIORITY, NULL);
+		STACK_SIZE_MIN, NULL, 2, NULL);
+	xTaskCreate( vSoundTask, (const char*)"Sound Task",
+		STACK_SIZE_MIN, NULL, 3, &xHandleSound);
+	xTaskCreate( vServoTask, (const char*)"Servo Task",
+		STACK_SIZE_MIN, NULL, 2, NULL);
 	
 	vTaskStartScheduler();
 }
@@ -187,12 +188,21 @@ void vButtonTask(void *pvParameters)
 //			}
 //		}
 //	}
+	bool cancelled = false;
 	while(1) {
 		if (STM_EVAL_PBGetState(BUTTON_USER)) {
-			output_sound = true;
+			STM_EVAL_LEDOn(LED_BLUE);
+				//output_sound = true;
+			if (!cancelled) {
+				cancelled = true;
+			}
 			curValvePos = VALVE_ESPRESSO;
 		} else {
-			output_sound = false;
+			STM_EVAL_LEDOff(LED_BLUE);
+				output_sound = false;
+			if (cancelled) {
+				cancelled = false;
+			}
 			curValvePos = VALVE_OFF;
 		}
 	}
@@ -200,13 +210,11 @@ void vButtonTask(void *pvParameters)
 
 void vSoundTask(void *pvParameters) {
 	while(1) {
-		if (SPI_I2S_GetFlagStatus(CODEC_I2S, SPI_I2S_FLAG_TXE)) {
-			SPI_I2S_SendData(CODEC_I2S, sample);
+		if (output_sound) {
+			if (SPI_I2S_GetFlagStatus(CODEC_I2S, SPI_I2S_FLAG_TXE)) {
+				SPI_I2S_SendData(CODEC_I2S, sample);
 
-			if (output_sound) {
-				//only update on every second sample to insure that L & R ch. have the same sample value
-				if (sampleCounter & 0x00000001)
-				{
+				if (sampleCounter & 0x00000001) {
 					sawWave += NOTEFREQUENCY;
 					if (sawWave > 1.0)
 						sawWave -= 2.0;
@@ -215,11 +223,11 @@ void vSoundTask(void *pvParameters) {
 					sample = (int16_t)(NOTEAMPLITUDE*filteredSaw);
 				}
 				sampleCounter++;
-			} else {
-				sample = 0;
-				sawWave = 0;
 			}
-		} 
+		} else {
+			SPI_I2S_SendData(CODEC_I2S, NULL);
+			vTaskDelay(1000/portTICK_RATE_MS);
+		}
 	}
 }
 
