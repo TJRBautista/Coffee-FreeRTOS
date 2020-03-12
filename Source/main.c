@@ -13,6 +13,35 @@
 #include <stdbool.h>
 //******************************************************************************
 
+// use for setup the clock speed for TIM2
+// this timer is used for general purpose timing
+const uint16_t TIMER_2_PRESCALER = 232;
+const uint16_t TIMER_2_PERIOD = 2999;
+const uint16_t TIMER_2_FREQUENCY = 120;
+
+TIM_TimeBaseInitTypeDef timer_InitStructure;
+void InitTimer_2() {
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+
+  timer_InitStructure.TIM_Prescaler = TIMER_2_PRESCALER;
+  timer_InitStructure.TIM_CounterMode = TIM_CounterMode_Up;
+  timer_InitStructure.TIM_Period = TIMER_2_PERIOD;
+  timer_InitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
+  timer_InitStructure.TIM_RepetitionCounter = 0;
+  TIM_TimeBaseInit(TIM2, & timer_InitStructure);
+  TIM_Cmd(TIM2, ENABLE);
+  TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
+}
+
+void EnableTimer2Interrupt() {
+  NVIC_InitTypeDef nvicStructure;
+  nvicStructure.NVIC_IRQChannel = TIM2_IRQn;
+  nvicStructure.NVIC_IRQChannelPreemptionPriority = 0;
+  nvicStructure.NVIC_IRQChannelSubPriority = 1;
+  nvicStructure.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init( & nvicStructure);
+}
+
 // size option for coffee
 const uint16_t SMALL = LED_ORANGE; // orange
 const uint16_t MEDIUM = LED_RED; // red
@@ -23,7 +52,7 @@ const uint16_t LONG_PRESS_TIME = 2; // 3 seconds holding for long press.
 const float MIN_PRESS_TIME = 0.05; // the min single press should need 0.05 second.
 const float DOUBLE_CLICK_TIME = 0.5; // double press should be with in 0.5 second.
 const uint16_t IDLE_TIME = 5;
-const int SOUND_OUTPUT = 1; // output the sound for 1 second
+const float SOUND_OUTPUT = 0.5; // output the sound for 1 second
 
 //coffee machine variables
 int num_blink = 0;
@@ -40,7 +69,8 @@ uint16_t new_num_click = 0;
 fir_8 filt;
 bool output_sound = true;
 int timer_for_sound = 0;
-bool start_sound_timer = false;
+bool sound_init = true;
+//bool start_sound_timer = false;
 
 // variables for servo
 const uint32_t VALVE_OFF = 001;
@@ -60,6 +90,25 @@ void SetupPWM(void);
 void vButtonTask(void *pvParameters);
 void vSoundTask(void *pvParameters);
 void vServoTask(void *pvParameters);
+
+
+void TIM2_IRQHandler() {
+  //Checks whether the TIM2 interrupt has occurred or not
+  if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET) {
+    TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+			
+		if(output_sound)
+			{
+			timer_for_sound++;
+		}
+		if(timer_for_sound > SOUND_OUTPUT * TIMER_2_FREQUENCY)
+		{
+			timer_for_sound = 0;
+			output_sound = false;
+		}
+		
+  }
+}
 
 //volatile uint32_t msTicks; //counts 1ms timeTicks
 //void SysTick_Handler(void) {
@@ -106,6 +155,9 @@ int main(void)
 	STM_EVAL_LEDInit(LED_RED);
 	STM_EVAL_PBInit(BUTTON_USER, BUTTON_MODE_GPIO);
 	
+	InitTimer_2();
+	EnableTimer2Interrupt();
+	
 	initSound();
 	initFilter(&filt);
 	
@@ -114,11 +166,11 @@ int main(void)
 	SetupPWM();
 	
 	xTaskCreate( vButtonTask, (const char*)"Button Task",
-		STACK_SIZE_MIN, NULL, 2, NULL);
+		STACK_SIZE_MIN, NULL, 0, NULL);
 	xTaskCreate( vSoundTask, (const char*)"Sound Task",
-		STACK_SIZE_MIN, NULL, 3, &xHandleSound);
+		STACK_SIZE_MIN, NULL, 1, NULL);
 	xTaskCreate( vServoTask, (const char*)"Servo Task",
-		STACK_SIZE_MIN, NULL, 2, NULL);
+		STACK_SIZE_MIN, NULL, 0, NULL);
 	
 	vTaskStartScheduler();
 }
@@ -126,36 +178,16 @@ int main(void)
 
 void vButtonTask(void *pvParameters)
 {
-//	bool cancelled = false;
-//	for(;;)
-//	{
-//		if (STM_EVAL_PBGetState(BUTTON_USER)) 
-//		{
-//			if(!cancelled) {
-//				cancelled = true;
-//				// suspend the task that point to its task handle pointer
-//				vTaskSuspend(xHandleBlue);
-//			} else {
-//				cancelled = false;
-//				vTaskResume(xHandleBlue);
-//			}
-//		}
-//	}
-	bool cancelled = false;
 	while(1) {
 		if (STM_EVAL_PBGetState(BUTTON_USER)) {
 			STM_EVAL_LEDOn(LED_BLUE);
-				//output_sound = true;
-			if (!cancelled) {
-				cancelled = true;
-			}
+			output_sound = true;
+
 			curValvePos = VALVE_ESPRESSO;
 		} else {
 			STM_EVAL_LEDOff(LED_BLUE);
-				output_sound = false;
-			if (cancelled) {
-				cancelled = false;
-			}
+			//output_sound = false;
+
 			curValvePos = VALVE_OFF;
 		}
 	}
@@ -163,23 +195,27 @@ void vButtonTask(void *pvParameters)
 
 void vSoundTask(void *pvParameters) {
 	while(1) {
+		if (SPI_I2S_GetFlagStatus(CODEC_I2S, SPI_I2S_FLAG_TXE)) {
+			SPI_I2S_SendData(CODEC_I2S, sample);
+			if (sampleCounter & 0x00000001) {
+				sawWave += NOTEFREQUENCY;
+				if (sawWave > 1.0)
+					sawWave -= 2.0;
+
+				filteredSaw = updateFilter(&filt, sawWave);
+				sample = (int16_t)(NOTEAMPLITUDE*filteredSaw);
+			}
+			sampleCounter++;
+		}
 		if (output_sound) {
-			if (SPI_I2S_GetFlagStatus(CODEC_I2S, SPI_I2S_FLAG_TXE)) {
-				SPI_I2S_SendData(CODEC_I2S, sample);
-
-				if (sampleCounter & 0x00000001) {
-					sawWave += NOTEFREQUENCY;
-					if (sawWave > 1.0)
-						sawWave -= 2.0;
-
-					filteredSaw = updateFilter(&filt, sawWave);
-					sample = (int16_t)(NOTEAMPLITUDE*filteredSaw);
-				}
-				sampleCounter++;
+			if(!sound_init) {
+				sound_init = true;
+				initSound();
 			}
 		} else {
-			SPI_I2S_SendData(CODEC_I2S, NULL);
-			vTaskDelay(100/portTICK_RATE_MS);
+			GPIO_ResetBits(GPIOD, GPIO_Pin_4);
+			sound_init = false;
+			vTaskDelay(10/portTICK_RATE_MS);
 		}
 	}
 }
