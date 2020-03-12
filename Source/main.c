@@ -90,6 +90,7 @@ void SetupPWM(void);
 void vButtonTask(void *pvParameters);
 void vSoundTask(void *pvParameters);
 void vServoTask(void *pvParameters);
+void vMainTask(void *pvParameters);
 
 
 void TIM2_IRQHandler() {
@@ -129,7 +130,6 @@ void TIM2_IRQHandler() {
 #define STACK_SIZE_MIN	128	/* usStackDepth	- the stack size DEFINED IN WORDS (4 bytes).*/
 
 TaskHandle_t xHandleBlue = NULL;
-TaskHandle_t xHandleSound = NULL;
 
 //******************************************************************************
 int main(void)
@@ -171,6 +171,9 @@ int main(void)
 		STACK_SIZE_MIN, NULL, 1, NULL);
 	xTaskCreate( vServoTask, (const char*)"Servo Task",
 		STACK_SIZE_MIN, NULL, 0, NULL);
+	xTaskCreate( vMainTask, (const char*)"main project Task",
+		STACK_SIZE_MIN, NULL, 0, NULL);
+	
 	
 	vTaskStartScheduler();
 }
@@ -217,6 +220,12 @@ void vSoundTask(void *pvParameters) {
 			sound_init = false;
 			vTaskDelay(10/portTICK_RATE_MS);
 		}
+	}
+}
+
+void vMainTask(void *pvParameters) {
+	while(1) {
+		
 	}
 }
 
