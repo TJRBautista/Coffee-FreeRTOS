@@ -343,7 +343,7 @@ void UpdateBrewingStatus() {
 		LEDOn(BLUE);
 		//output_sound = true;
 		timer_for_sound = 0;
-		start_sound_timer = true;
+		output_sound = true;
 		curMode = neutral;
 	} else if (is_long_click) {
 		curMode = programming;
@@ -567,7 +567,7 @@ int main(void)
 	xTaskCreate( vButtonTask, (const char*)"Button Task",
 		STACK_SIZE_MIN, NULL, 0, NULL);
 	xTaskCreate( vSoundTask, (const char*)"Sound Task",
-		STACK_SIZE_MIN, NULL, 0, NULL);
+		STACK_SIZE_MIN, NULL, 1, NULL);
 	xTaskCreate( vServoTask, (const char*)"Servo Task",
 		STACK_SIZE_MIN, NULL, 0, NULL);
 	xTaskCreate( vMainTask, (const char*)"main project Task",
