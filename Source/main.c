@@ -57,10 +57,6 @@ void initServo(void);
 void InitPWMTimer4(void);
 void SetupPWM(void);
 
-void vLedBlinkBlue(void *pvParameters);
-void vLedBlinkRed(void *pvParameters);
-void vLedBlinkGreen(void *pvParameters);
-void vLedBlinkOrange(void *pvParameters);
 void vButtonTask(void *pvParameters);
 void vSoundTask(void *pvParameters);
 void vServoTask(void *pvParameters);
@@ -117,14 +113,6 @@ int main(void)
 	InitPWMTimer4();
 	SetupPWM();
 	
-//	xTaskCreate( vLedBlinkBlue, (const char*)"Led Blink Task Blue", 
-//		STACK_SIZE_MIN, NULL, tskIDLE_PRIORITY, &xHandleBlue );
-//	xTaskCreate( vLedBlinkRed, (const char*)"Led Blink Task Red", 
-//		STACK_SIZE_MIN, NULL, tskIDLE_PRIORITY, NULL );
-//	xTaskCreate( vLedBlinkGreen, (const char*)"Led Blink Task Green", 
-//		STACK_SIZE_MIN, NULL, tskIDLE_PRIORITY, NULL );
-//	xTaskCreate( vLedBlinkOrange, (const char*)"Led Blink Task Orange", 
-//		STACK_SIZE_MIN, NULL, tskIDLE_PRIORITY, NULL );
 	xTaskCreate( vButtonTask, (const char*)"Button Task",
 		STACK_SIZE_MIN, NULL, 2, NULL);
 	xTaskCreate( vSoundTask, (const char*)"Sound Task",
@@ -135,41 +123,6 @@ int main(void)
 	vTaskStartScheduler();
 }
 
-void vLedBlinkBlue(void *pvParameters)
-{
-	for(;;)
-	{
-		STM_EVAL_LEDToggle(LED_BLUE);
-		vTaskDelay( 100 / portTICK_RATE_MS );
-	}
-}
-
-void vLedBlinkRed(void *pvParameters)
-{
-	for(;;)
-	{
-		STM_EVAL_LEDToggle(LED_RED);
-		vTaskDelay( 500 / portTICK_RATE_MS );
-	}
-}
-
-void vLedBlinkGreen(void *pvParameters)
-{
-	for(;;)
-	{
-		STM_EVAL_LEDToggle(LED_GREEN);
-		vTaskDelay( 200 / portTICK_RATE_MS );
-	}
-}
-
-void vLedBlinkOrange(void *pvParameters)
-{
-	for(;;)
-	{
-		STM_EVAL_LEDToggle(LED_ORANGE);
-		vTaskDelay( 300 / portTICK_RATE_MS );
-	}
-}
 
 void vButtonTask(void *pvParameters)
 {
@@ -226,7 +179,7 @@ void vSoundTask(void *pvParameters) {
 			}
 		} else {
 			SPI_I2S_SendData(CODEC_I2S, NULL);
-			vTaskDelay(1000/portTICK_RATE_MS);
+			vTaskDelay(100/portTICK_RATE_MS);
 		}
 	}
 }
