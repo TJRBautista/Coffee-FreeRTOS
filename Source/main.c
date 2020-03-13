@@ -38,9 +38,9 @@ const uint16_t RED = GPIO_Pin_14;
 const uint16_t BLUE = GPIO_Pin_15;
 
 // size option for coffee
-const uint16_t SMALL = GPIO_Pin_13; // orange
-const uint16_t MEDIUM = GPIO_Pin_14; // red
-const uint16_t EXTRA_LARGE = GPIO_Pin_15; // blue
+const uint16_t MOCHA = GPIO_Pin_13; // orange
+const uint16_t ESPRESSO = GPIO_Pin_14; // red
+const uint16_t LATTE = GPIO_Pin_15; // blue
 
 // define few timing for events
 const uint16_t LONG_PRESS_TIME = 2; // 3 seconds holding for long press.
@@ -72,7 +72,6 @@ bool countdown_timer_has_started = false;
 bool is_selecting = false;
 
 uint16_t error_LED_1 = 0;
-uint16_t error_LED_2 = 0;
 uint16_t display_LED_1 = 0;
 int num_blink = 0;
 
@@ -216,16 +215,7 @@ void TIM2_IRQHandler() {
 			timer_for_idle = 0;
 			is_selecting = false;
 		}
-		
-//		if (start_sound_timer) {
-//			//vTaskSuspend(xMasterThreadHandler);
-//			timer_for_sound++;
-//			output_sound = timer_for_sound <= SOUND_OUTPUT * TIMER_2_FREQUENCY;
-//			if (!output_sound) {
-//				start_sound_timer = false;
-//				timer_for_sound = 0;
-//			}
-//		}
+
 		if(output_sound)
 		{
 			timer_for_sound++;
@@ -395,13 +385,13 @@ void DisplayCountdown() {
 	else {
 		switch(coffee_size) {
 			case 0:
-				display_LED_1 = SMALL;
+				display_LED_1 = MOCHA;
 				break;
 			case 1:
-				display_LED_1 = MEDIUM;
+				display_LED_1 = ESPRESSO;
 				break;
 			case 2:
-				display_LED_1 = EXTRA_LARGE;
+				display_LED_1 = LATTE;
 				break;
 		}
 	}
@@ -448,17 +438,17 @@ void ShowSizeLED() {
 		LEDOff(GREEN);
 	
 	if (coffee_size == 0) {
-		LEDOff(EXTRA_LARGE);
-		LEDOff(MEDIUM);
-		LEDOn(SMALL);
+		LEDOff(LATTE);
+		LEDOff(ESPRESSO);
+		LEDOn(MOCHA);
 	} else if (coffee_size == 1) {
-		LEDOff(SMALL);
-		LEDOff(EXTRA_LARGE);
-		LEDOn(MEDIUM);
+		LEDOff(MOCHA);
+		LEDOff(LATTE);
+		LEDOn(ESPRESSO);
 	} else if (coffee_size == 2) {
-		LEDOff(MEDIUM);
-		LEDOff(SMALL);
-		LEDOn(EXTRA_LARGE);
+		LEDOff(ESPRESSO);
+		LEDOff(MOCHA);
+		LEDOn(LATTE);
 	}
 }
 
