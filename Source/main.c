@@ -455,8 +455,9 @@ void ShowBrewingLED() {
 void ShowSizeLED() {
 	if (curMode == programming)
 		LEDOn(GREEN);
-	else
-		LEDOff(GREEN);
+	//commented out to test dispense task, remove in actual code
+//	else
+//		LEDOff(GREEN);
 	
 	if (coffee_size == 0) {
 		LEDOff(EXTRA_LARGE);
@@ -477,7 +478,8 @@ void ShowNeutralLED() {
 	LEDOn(RED);
 	LEDOn(ORANGE);
 	LEDOn(BLUE);
-	LEDOff(GREEN);
+	//commented out to test dispense task, remove in actual code
+	//LEDOff(GREEN);
 }
 
 void ShowLED() {
