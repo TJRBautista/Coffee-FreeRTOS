@@ -629,8 +629,18 @@ void vButtonTask(void *pvParameters)
       is_button_up = false;
 			// reset the timer for idle when button event happened
 			timer_for_idle = 0;
-			ChangeMode = ChangeMode || (preMode != curMode);
+			if(curMode != making || curMode != neutral || preMode != making || preMode != neutral)
+			{
+				ChangeMode = ChangeMode || (preMode != curMode);
+			} else
+			{
+				ChangeMode = false;
+			}
 			preMode = curMode;
+			if(curMode == making || curMode == neutral || preMode == making || preMode == neutral)
+			{
+				ChangeMode = false;
+			}
     } else {
       if (CanUpdateClickState()) {
 				if (!is_single_click && !is_double_click && !ChangeMode) {
