@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\Output\freertos_project.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\Output\freertos_project.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060750: Last Updated: Fri Mar 13 13:11:31 2020
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060750: Last Updated: Fri Mar 13 15:53:56 2020
 <BR><P>
 <H3>Maximum Stack Usage =        232 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -713,7 +713,7 @@ Global Symbols
 <LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UpdateProgrammingStatus
 </UL>
 
-<P><STRONG><a name="[28]"></a>TIM2_IRQHandler</STRONG> (Thumb, 140 bytes, Stack size 8 bytes, main.o(.text))
+<P><STRONG><a name="[28]"></a>TIM2_IRQHandler</STRONG> (Thumb, 156 bytes, Stack size 8 bytes, main.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 20<LI>Call Chain = TIM2_IRQHandler &rArr; TIM_GetITStatus
 </UL>
 <BR>[Calls]<UL><LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;TIM_GetITStatus
@@ -750,7 +750,7 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UpdateProgrammingStatus
 </UL>
 
-<P><STRONG><a name="[91]"></a>UpdateProgrammingStatus</STRONG> (Thumb, 266 bytes, Stack size 8 bytes, main.o(.text))
+<P><STRONG><a name="[91]"></a>UpdateProgrammingStatus</STRONG> (Thumb, 270 bytes, Stack size 8 bytes, main.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = UpdateProgrammingStatus &rArr; LEDOff
 </UL>
 <BR>[Calls]<UL><LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DisplayCountdown
@@ -759,7 +759,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UpdateMachineStatus
 </UL>
 
-<P><STRONG><a name="[93]"></a>vDispenseLatte</STRONG> (Thumb, 192 bytes, Stack size 0 bytes, main.o(.text))
+<P><STRONG><a name="[93]"></a>vDispenseLatte</STRONG> (Thumb, 212 bytes, Stack size 0 bytes, main.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 56<LI>Call Chain = vDispenseLatte &rArr; vTaskDelay &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
 <BR>[Calls]<UL><LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelete
@@ -771,7 +771,7 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(.text)
 </UL>
-<P><STRONG><a name="[98]"></a>vDispenseEspresso</STRONG> (Thumb, 102 bytes, Stack size 0 bytes, main.o(.text))
+<P><STRONG><a name="[98]"></a>vDispenseEspresso</STRONG> (Thumb, 122 bytes, Stack size 0 bytes, main.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 56<LI>Call Chain = vDispenseEspresso &rArr; vTaskDelay &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
 <BR>[Calls]<UL><LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelete
@@ -783,7 +783,7 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(.text)
 </UL>
-<P><STRONG><a name="[99]"></a>vDispenseMocha</STRONG> (Thumb, 192 bytes, Stack size 0 bytes, main.o(.text))
+<P><STRONG><a name="[99]"></a>vDispenseMocha</STRONG> (Thumb, 212 bytes, Stack size 0 bytes, main.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 56<LI>Call Chain = vDispenseMocha &rArr; vTaskDelay &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
 <BR>[Calls]<UL><LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelete
@@ -804,11 +804,11 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UpdateMachineStatus
 </UL>
 
-<P><STRONG><a name="[9d]"></a>UpdateNeutralStatus</STRONG> (Thumb, 52 bytes, Stack size 0 bytes, main.o(.text))
+<P><STRONG><a name="[9d]"></a>UpdateNeutralStatus</STRONG> (Thumb, 146 bytes, Stack size 0 bytes, main.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UpdateMachineStatus
 </UL>
 
-<P><STRONG><a name="[9e]"></a>UpdateMakingStatus</STRONG> (Thumb, 138 bytes, Stack size 0 bytes, main.o(.text))
+<P><STRONG><a name="[9e]"></a>UpdateMakingStatus</STRONG> (Thumb, 48 bytes, Stack size 0 bytes, main.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UpdateMachineStatus
 </UL>
 

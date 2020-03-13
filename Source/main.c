@@ -49,7 +49,7 @@ const uint16_t LONG_PRESS_TIME = 2; // 3 seconds holding for long press.
 const float MIN_PRESS_TIME = 0.05; // the min single press should need 0.05 second.
 const float DOUBLE_CLICK_TIME = 0.5; // double press should be with in 0.5 second.
 const uint16_t IDLE_TIME = 5;
-const int SOUND_OUTPUT = 1; // output the sound for 1 second
+const float SOUND_OUTPUT = 0.3; // output the sound for 1 second
 
 // used to help calculate the time interval for some event
 unsigned int timer_for_button_hold = 0;
@@ -715,6 +715,10 @@ void vDispenseLatte(void *pvParameters) {
 			timer_for_idle = 0;
 			milk--;
 		}
+		
+		output_sound = true;
+		vTaskDelay(500/portTICK_RATE_MS);
+		output_sound = true;
 			
 		vTaskDelete(NULL);
 	}
@@ -761,6 +765,10 @@ void vDispenseMocha(void *pvParameters) {
 			choc--;
 		}
 		
+		output_sound = true;
+		vTaskDelay(500/portTICK_RATE_MS);
+		output_sound = true;
+		
 		vTaskDelete(NULL);
 	}
 }
@@ -788,6 +796,10 @@ void vDispenseEspresso(void *pvParameters) {
 			espresso--;
 		}
 			
+		
+		output_sound = true;
+		vTaskDelay(500/portTICK_RATE_MS);
+		output_sound = true;
 		vTaskDelete(NULL);
 	}
 }
