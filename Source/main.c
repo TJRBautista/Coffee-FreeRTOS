@@ -79,9 +79,9 @@ int coffee_type = 0;
 const int MAX_SIZE_OPTION = 3;
 
 // predefine timing for coffee machine
-uint16_t time_small = 2;
-uint16_t time_medium = 4;
-uint16_t time_ex_large = 6;
+uint16_t time_milk = 2;
+uint16_t time_espresso = 4;
+uint16_t time_choc = 6;
 uint16_t new_num_click = 0;
 
 fir_8 filt;
@@ -252,9 +252,9 @@ bool CanUpdateClickState() {
 //TODO: this assignment no longer need to update coffee timeing, but needs to update each
 // ingredient time
 void UpdateCoffeeTiming() {
-	if (coffee_type == 0) time_small = new_num_click;
-	else if (coffee_type == 1) time_medium = new_num_click;
-	else if (coffee_type == 2) time_ex_large = new_num_click;
+	if (coffee_type == 0) time_milk = new_num_click;
+	else if (coffee_type == 1) time_espresso = new_num_click;
+	else if (coffee_type == 2) time_choc = new_num_click;
 }
 
 void UpdateProgrammingStatus() {
@@ -400,13 +400,13 @@ void DisplayCountdown() {
 	
 	//set countdown
 	if ( coffee_type == 0) {
-		num_blink = time_small * 2;
+		num_blink = time_milk * 2;
 	}
 	else if (coffee_type == 1) {
-		num_blink = time_medium * 2;
+		num_blink = time_espresso * 2;
 	}
 	else if (coffee_type == 2) {
-		num_blink = time_ex_large * 2;
+		num_blink = time_choc * 2;
 	}
 	countdown_timer_has_started = true;
 }
