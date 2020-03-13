@@ -512,6 +512,7 @@ void SetupPWM(void);
 void vButtonTask(void *pvParameters);
 void vSoundTask(void *pvParameters);
 void vMainTask(void *pvParameters);
+void vDispenseCoffee(void *pvParameters);
 
 void vServoTask(void *pvParameters);
 
@@ -530,6 +531,14 @@ void vServoTask(void *pvParameters);
 //		while (1){};
 //	}
 //}
+
+typedef struct {
+	int espresso;
+	int milk;
+	int choco;
+} ingredients;
+	
+ingredients latte = {3, 2, 0};
 
 
 #define STACK_SIZE_MIN	128	/* usStackDepth	- the stack size DEFINED IN WORDS (4 bytes).*/
@@ -585,7 +594,8 @@ int main(void)
 		STACK_SIZE_MIN, (void *) NULL, 1, NULL);
 	xTaskCreate( vMainTask, (const char*)"main project Task",
 		STACK_SIZE_MIN, NULL, 0, NULL);
-	
+	xTaskCreate( vDispenseCoffee, (const char*)"Dispense Coffee",
+		STACK_SIZE_MIN, (void *) &latte, 0, NULL);
 	
 	vTaskStartScheduler();
 }
@@ -655,19 +665,37 @@ void vMainTask(void *pvParameters) {
 	}
 }
 
-typedef struct {
-	int espresso;
-	int milk;
-	int choco;
-} ingredients;
-
 void vDispenseCoffee(void *pvParameters) {
 	ingredients *recipe = (ingredients *) pvParameters;
 	while (1) {
 		while (recipe->espresso) {
-//			TIM4->CCR1 = VALVE_ESPRESSO;
-//			vTaskDelay(1000/portTICK_RATE_MS);
+			curValvePos = VALVE_ESPRESSO;
+			changeValve = true;
+			STM_EVAL_LEDOn(LED_GREEN);
+			vTaskDelay(500/portTICK_RATE_MS);
+			STM_EVAL_LEDOff(LED_GREEN);
+			vTaskDelay(500/portTICK_RATE_MS);
 			recipe->espresso--;
+		}
+		
+		while (recipe -> milk) {
+			curValvePos = VALVE_MILK;
+			changeValve = true;
+			STM_EVAL_LEDOn(LED_GREEN);
+			vTaskDelay(500/portTICK_RATE_MS);
+			STM_EVAL_LEDOff(LED_GREEN);
+			vTaskDelay(500/portTICK_RATE_MS);
+			recipe->milk--;
+		}
+		
+		while (recipe -> choco) {
+			curValvePos = VALVE_CHOCO;
+			changeValve = true;
+			STM_EVAL_LEDOn(LED_GREEN);
+			vTaskDelay(500/portTICK_RATE_MS);
+			STM_EVAL_LEDOff(LED_GREEN);
+			vTaskDelay(500/portTICK_RATE_MS);
+			recipe->milk--;
 		}
 		
 		vTaskDelete(NULL);
