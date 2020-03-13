@@ -617,8 +617,9 @@ int main(void)
 
 void vButtonTask(void *pvParameters)
 {
+	mode preMode = curMode;
+	bool ChangeMode = false;
 	while(1) {
-		
 		uint8_t button_pin = GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_0);
 		uint32_t *curValvePos = (uint32_t *) pvParameters;
 		if (button_pin) {
@@ -628,14 +629,17 @@ void vButtonTask(void *pvParameters)
       is_button_up = false;
 			// reset the timer for idle when button event happened
 			timer_for_idle = 0;
+			ChangeMode = ChangeMode || (preMode != curMode);
+			preMode = curMode;
     } else {
       if (CanUpdateClickState()) {
-				if (!is_single_click && !is_double_click) {
+				if (!is_single_click && !is_double_click && !ChangeMode) {
 					is_single_click = true;
 				} else if (is_single_click && !is_double_click) {
 					is_single_click = false;
 					is_double_click = true;
 				}
+				ChangeMode = false;
       }
 			if(!is_button_up) 
 			{
