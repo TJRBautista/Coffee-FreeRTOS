@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\Output\freertos_project.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\Output\freertos_project.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060750: Last Updated: Fri Mar 13 15:53:56 2020
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060750: Last Updated: Fri Mar 13 16:27:04 2020
 <BR><P>
 <H3>Maximum Stack Usage =        232 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -738,7 +738,7 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[8f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UpdateTimingStatus
 </UL>
 
-<P><STRONG><a name="[8f]"></a>UpdateTimingStatus</STRONG> (Thumb, 122 bytes, Stack size 4 bytes, main.o(.text))
+<P><STRONG><a name="[8f]"></a>UpdateTimingStatus</STRONG> (Thumb, 134 bytes, Stack size 4 bytes, main.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = UpdateTimingStatus
 </UL>
 <BR>[Calls]<UL><LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UpdateIngredientTiming
@@ -746,11 +746,11 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UpdateMachineStatus
 </UL>
 
-<P><STRONG><a name="[92]"></a>DisplayCountdown</STRONG> (Thumb, 106 bytes, Stack size 0 bytes, main.o(.text))
+<P><STRONG><a name="[92]"></a>DisplayCountdown</STRONG> (Thumb, 224 bytes, Stack size 0 bytes, main.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UpdateProgrammingStatus
 </UL>
 
-<P><STRONG><a name="[91]"></a>UpdateProgrammingStatus</STRONG> (Thumb, 270 bytes, Stack size 8 bytes, main.o(.text))
+<P><STRONG><a name="[91]"></a>UpdateProgrammingStatus</STRONG> (Thumb, 154 bytes, Stack size 8 bytes, main.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = UpdateProgrammingStatus &rArr; LEDOff
 </UL>
 <BR>[Calls]<UL><LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DisplayCountdown
@@ -795,7 +795,7 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(.text)
 </UL>
-<P><STRONG><a name="[9a]"></a>UpdateBrewingStatus</STRONG> (Thumb, 298 bytes, Stack size 32 bytes, main.o(.text))
+<P><STRONG><a name="[9a]"></a>UpdateBrewingStatus</STRONG> (Thumb, 392 bytes, Stack size 32 bytes, main.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 168 + Unknown Stack Size
 <LI>Call Chain = UpdateBrewingStatus &rArr; xTaskGenericCreate &rArr; prvAllocateTCBAndStack &rArr; pvPortMalloc &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
@@ -804,7 +804,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UpdateMachineStatus
 </UL>
 
-<P><STRONG><a name="[9d]"></a>UpdateNeutralStatus</STRONG> (Thumb, 146 bytes, Stack size 0 bytes, main.o(.text))
+<P><STRONG><a name="[9d]"></a>UpdateNeutralStatus</STRONG> (Thumb, 52 bytes, Stack size 0 bytes, main.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UpdateMachineStatus
 </UL>
 
@@ -912,7 +912,7 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[a8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vSoundTask
 </UL>
 
-<P><STRONG><a name="[a8]"></a>vSoundTask</STRONG> (Thumb, 246 bytes, Stack size 16 bytes, main.o(.text))
+<P><STRONG><a name="[a8]"></a>vSoundTask</STRONG> (Thumb, 368 bytes, Stack size 16 bytes, main.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 108<LI>Call Chain = vSoundTask &rArr; initSound &rArr; codec_init &rArr; I2C_Init &rArr; RCC_GetClocksFreq
 </UL>
 <BR>[Calls]<UL><LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelay
@@ -931,7 +931,7 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(.text)
 </UL>
-<P><STRONG><a name="[b3]"></a>vButtonTask</STRONG> (Thumb, 248 bytes, Stack size 0 bytes, main.o(.text))
+<P><STRONG><a name="[b3]"></a>vButtonTask</STRONG> (Thumb, 114 bytes, Stack size 0 bytes, main.o(.text))
 <BR><BR>[Calls]<UL><LI><a href="#[b4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GPIO_ReadInputDataBit
 <LI><a href="#[b5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CanUpdateClickState
 </UL>

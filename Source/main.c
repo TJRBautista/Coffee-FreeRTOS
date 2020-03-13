@@ -284,6 +284,7 @@ void UpdateTimingStatus() {
 	
 	if (is_single_click && !within_double_click_period) {
 		new_num_click++;
+		output_sound = true;
 		is_single_click = false;
 	} else if (is_double_click) {
 		// do nothing for now
@@ -297,6 +298,8 @@ void UpdateTimingStatus() {
 
 		if(new_num_click)
 			UpdateIngredientTiming();
+		
+		output_sound = true;
 	}
 }
 
@@ -615,6 +618,7 @@ int main(void)
 void vButtonTask(void *pvParameters)
 {
 	while(1) {
+		
 		uint8_t button_pin = GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_0);
 		uint32_t *curValvePos = (uint32_t *) pvParameters;
 		if (button_pin) {
