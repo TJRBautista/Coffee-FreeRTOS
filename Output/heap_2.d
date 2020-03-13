@@ -1,8 +1,8 @@
 .\output\heap_2.o: FreeRTOS\portable\MemMang\heap_2.c
-.\output\heap_2.o: D:\ARM\ARMCC\Bin\..\include\stdlib.h
+.\output\heap_2.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
 .\output\heap_2.o: .\FreeRTOS\include\FreeRTOS.h
-.\output\heap_2.o: D:\ARM\ARMCC\Bin\..\include\stddef.h
-.\output\heap_2.o: D:\ARM\ARMCC\Bin\..\include\stdint.h
+.\output\heap_2.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
+.\output\heap_2.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
 .\output\heap_2.o: .\FreeRTOS\include\FreeRTOSConfig.h
 .\output\heap_2.o: .\Libraries\CMSIS\Device\ST\STM32F4xx\Include\stm32f4xx.h
 .\output\heap_2.o: .\Libraries\CMSIS\Include\core_cm4.h

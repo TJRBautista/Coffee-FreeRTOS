@@ -2,7 +2,7 @@
 .\output\codec.o: Source\codec.h
 .\output\codec.o: .\Libraries\CMSIS\Device\ST\STM32F4xx\Include\stm32f4xx.h
 .\output\codec.o: .\Libraries\CMSIS\Include\core_cm4.h
-.\output\codec.o: D:\ARM\ARMCC\Bin\..\include\stdint.h
+.\output\codec.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
 .\output\codec.o: .\Libraries\CMSIS\Include\core_cmInstr.h
 .\output\codec.o: .\Libraries\CMSIS\Include\core_cmFunc.h
 .\output\codec.o: .\Libraries\CMSIS\Include\core_cm4_simd.h

@@ -1,9 +1,9 @@
 .\output\tasks.o: FreeRTOS\tasks.c
-.\output\tasks.o: D:\ARM\ARMCC\Bin\..\include\stdlib.h
-.\output\tasks.o: D:\ARM\ARMCC\Bin\..\include\string.h
+.\output\tasks.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
+.\output\tasks.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
 .\output\tasks.o: .\FreeRTOS\include\FreeRTOS.h
-.\output\tasks.o: D:\ARM\ARMCC\Bin\..\include\stddef.h
-.\output\tasks.o: D:\ARM\ARMCC\Bin\..\include\stdint.h
+.\output\tasks.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
+.\output\tasks.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
 .\output\tasks.o: .\FreeRTOS\include\FreeRTOSConfig.h
 .\output\tasks.o: .\Libraries\CMSIS\Device\ST\STM32F4xx\Include\stm32f4xx.h
 .\output\tasks.o: .\Libraries\CMSIS\Include\core_cm4.h
