@@ -38,9 +38,9 @@ const uint16_t RED = GPIO_Pin_14;
 const uint16_t BLUE = GPIO_Pin_15;
 
 // size option for coffee
-const uint16_t MOCHA = GPIO_Pin_13; // orange
-const uint16_t ESPRESSO = GPIO_Pin_14; // red
-const uint16_t LATTE = GPIO_Pin_15; // blue
+const uint16_t SMALL = GPIO_Pin_13; // orange
+const uint16_t MEDIUM = GPIO_Pin_14; // red
+const uint16_t EXTRA_LARGE = GPIO_Pin_15; // blue
 
 // define few timing for events
 const uint16_t LONG_PRESS_TIME = 2; // 3 seconds holding for long press.
@@ -72,16 +72,17 @@ bool countdown_timer_has_started = false;
 bool is_selecting = false;
 
 uint16_t error_LED_1 = 0;
+uint16_t error_LED_2 = 0;
 uint16_t display_LED_1 = 0;
 int num_blink = 0;
 
-int coffee_type = 0;
+int coffee_size = 0;
 const int MAX_SIZE_OPTION = 3;
 
 // predefine timing for coffee machine
-uint16_t time_milk = 2;
-uint16_t time_espresso = 4;
-uint16_t time_choc = 6;
+uint16_t time_small = 2;
+uint16_t time_medium = 4;
+uint16_t time_ex_large = 6;
 uint16_t new_num_click = 0;
 
 fir_8 filt;
@@ -215,7 +216,16 @@ void TIM2_IRQHandler() {
 			timer_for_idle = 0;
 			is_selecting = false;
 		}
-
+		
+//		if (start_sound_timer) {
+//			//vTaskSuspend(xMasterThreadHandler);
+//			timer_for_sound++;
+//			output_sound = timer_for_sound <= SOUND_OUTPUT * TIMER_2_FREQUENCY;
+//			if (!output_sound) {
+//				start_sound_timer = false;
+//				timer_for_sound = 0;
+//			}
+//		}
 		if(output_sound)
 		{
 			timer_for_sound++;
@@ -249,12 +259,10 @@ bool CanUpdateClickState() {
 					timer_for_button_hold >= MIN_PRESS_TIME * TIMER_2_FREQUENCY);
 }
 
-//TODO: this assignment no longer need to update coffee timeing, but needs to update each
-// ingredient time
 void UpdateCoffeeTiming() {
-	if (coffee_type == 0) time_milk = new_num_click;
-	else if (coffee_type == 1) time_espresso = new_num_click;
-	else if (coffee_type == 2) time_choc = new_num_click;
+	if (coffee_size == 0) time_small = new_num_click;
+	else if (coffee_size == 1) time_medium = new_num_click;
+	else if (coffee_size == 2) time_ex_large = new_num_click;
 }
 
 void UpdateProgrammingStatus() {
@@ -262,7 +270,7 @@ void UpdateProgrammingStatus() {
 		within_double_click_period = (timer_for_button_released <= (DOUBLE_CLICK_TIME * TIMER_2_FREQUENCY));
 		
 		if (is_single_click && !within_double_click_period) {
-			coffee_type = (coffee_type + 1) % MAX_SIZE_OPTION;
+			coffee_size = (coffee_size + 1) % MAX_SIZE_OPTION;
 			is_single_click = false;
 		} else if (is_double_click) {
 			//try to reprogram
@@ -310,13 +318,25 @@ void UpdateProgrammingStatus() {
 	}
 }
 
+// this block of definitions should probably be higher up when refactoring
+bool changeValve = false;
+const uint32_t VALVE_OFF = 001;
+const uint32_t VALVE_ESPRESSO = 1000;
+const uint32_t VALVE_MILK = 1500;
+const uint32_t VALVE_CHOCO = 2100;
+uint32_t curValvePos = VALVE_OFF;
+
 void UpdateBrewingStatus() {
 	if (is_selecting) {
 		within_double_click_period = (timer_for_button_released <= (DOUBLE_CLICK_TIME * TIMER_2_FREQUENCY));
 		
 		if ((is_single_click && !within_double_click_period)) {
-			coffee_type = (coffee_type + 1) % MAX_SIZE_OPTION;
+			coffee_size = (coffee_size + 1) % MAX_SIZE_OPTION;
 			is_single_click = false;
+			
+			//testing response of motor with a single click
+			curValvePos = (curValvePos == VALVE_OFF) ? VALVE_MILK : VALVE_OFF;
+			changeValve = true;
 		} else if (is_double_click) {
 			//try to give coffee
 			is_selecting = false;
@@ -365,7 +385,6 @@ void UpdateNeutralStatus() {
 		is_button_up = true;
 	}
 }
-
 void UpdateMachineStatus() {
 	switch (curMode) {
 		case programming:
@@ -385,28 +404,28 @@ void DisplayCountdown() {
 	if (curMode == brewing)
 		display_LED_1 = GREEN;
 	else {
-		switch(coffee_type) {
+		switch(coffee_size) {
 			case 0:
-				display_LED_1 = MOCHA;
+				display_LED_1 = SMALL;
 				break;
 			case 1:
-				display_LED_1 = ESPRESSO;
+				display_LED_1 = MEDIUM;
 				break;
 			case 2:
-				display_LED_1 = LATTE;
+				display_LED_1 = EXTRA_LARGE;
 				break;
 		}
 	}
 	
 	//set countdown
-	if ( coffee_type == 0) {
-		num_blink = time_milk * 2;
+	if ( coffee_size == 0) {
+		num_blink = time_small * 2;
 	}
-	else if (coffee_type == 1) {
-		num_blink = time_espresso * 2;
+	else if (coffee_size == 1) {
+		num_blink = time_medium * 2;
 	}
-	else if (coffee_type == 2) {
-		num_blink = time_choc * 2;
+	else if (coffee_size == 2) {
+		num_blink = time_ex_large * 2;
 	}
 	countdown_timer_has_started = true;
 }
@@ -436,21 +455,22 @@ void ShowBrewingLED() {
 void ShowSizeLED() {
 	if (curMode == programming)
 		LEDOn(GREEN);
-	else
-		LEDOff(GREEN);
+	//commented out to test dispense task, remove in actual code
+//	else
+//		LEDOff(GREEN);
 	
-	if (coffee_type == 0) {
-		LEDOff(LATTE);
-		LEDOff(ESPRESSO);
-		LEDOn(MOCHA);
-	} else if (coffee_type == 1) {
-		LEDOff(MOCHA);
-		LEDOff(LATTE);
-		LEDOn(ESPRESSO);
-	} else if (coffee_type == 2) {
-		LEDOff(ESPRESSO);
-		LEDOff(MOCHA);
-		LEDOn(LATTE);
+	if (coffee_size == 0) {
+		LEDOff(EXTRA_LARGE);
+		LEDOff(MEDIUM);
+		LEDOn(SMALL);
+	} else if (coffee_size == 1) {
+		LEDOff(SMALL);
+		LEDOff(EXTRA_LARGE);
+		LEDOn(MEDIUM);
+	} else if (coffee_size == 2) {
+		LEDOff(MEDIUM);
+		LEDOff(SMALL);
+		LEDOn(EXTRA_LARGE);
 	}
 }
 
@@ -458,7 +478,8 @@ void ShowNeutralLED() {
 	LEDOn(RED);
 	LEDOn(ORANGE);
 	LEDOn(BLUE);
-	LEDOff(GREEN);
+	//commented out to test dispense task, remove in actual code
+	//LEDOff(GREEN);
 }
 
 void ShowLED() {
@@ -475,11 +496,12 @@ void ShowLED() {
 //*******
 
 // variables for servo
-const uint32_t VALVE_OFF = 001;
-const uint32_t VALVE_ESPRESSO = 1000;
-const uint32_t VALVE_MILK = 1500;
-const uint32_t VALVE_CHOCO = 2100;
-uint32_t curValvePos = VALVE_OFF;
+//const uint32_t VALVE_OFF = 001;
+//const uint32_t VALVE_ESPRESSO = 1000;
+//const uint32_t VALVE_MILK = 1500;
+//const uint32_t VALVE_CHOCO = 2100;
+//uint32_t curValvePos = VALVE_OFF;
+//bool changeValve = false;
 
 void initSound(void);
 float updateFilter(fir_8* filt, float val);
@@ -491,8 +513,10 @@ void SetupPWM(void);
 
 void vButtonTask(void *pvParameters);
 void vSoundTask(void *pvParameters);
-void vServoTask(void *pvParameters);
 void vMainTask(void *pvParameters);
+void vDispenseCoffee(void *pvParameters);
+
+void vServoTask(void *pvParameters);
 
 //volatile uint32_t msTicks; //counts 1ms timeTicks
 //void SysTick_Handler(void) {
@@ -509,6 +533,14 @@ void vMainTask(void *pvParameters);
 //		while (1){};
 //	}
 //}
+
+typedef struct {
+	int espresso;
+	int milk;
+	int choco;
+} ingredients;
+	
+ingredients latte = {3, 2, 0};
 
 
 #define STACK_SIZE_MIN	128	/* usStackDepth	- the stack size DEFINED IN WORDS (4 bytes).*/
@@ -561,10 +593,11 @@ int main(void)
 	xTaskCreate( vSoundTask, (const char*)"Sound Task",
 		STACK_SIZE_MIN, NULL, 1, NULL);
 	xTaskCreate( vServoTask, (const char*)"Servo Task",
-		STACK_SIZE_MIN, NULL, 0, NULL);
+		STACK_SIZE_MIN, (void *) NULL, 1, NULL);
 	xTaskCreate( vMainTask, (const char*)"main project Task",
 		STACK_SIZE_MIN, NULL, 0, NULL);
-	
+	xTaskCreate( vDispenseCoffee, (const char*)"Dispense Coffee",
+		STACK_SIZE_MIN, (void *) &latte, 0, NULL);
 	
 	vTaskStartScheduler();
 }
@@ -574,6 +607,7 @@ void vButtonTask(void *pvParameters)
 {
 	while(1) {
 		uint8_t button_pin = GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_0);
+		uint32_t *curValvePos = (uint32_t *) pvParameters;
 		if (button_pin) {
       if (is_button_up) {
         timer_for_button_hold = 0;
@@ -633,9 +667,51 @@ void vMainTask(void *pvParameters) {
 	}
 }
 
+void vDispenseCoffee(void *pvParameters) {
+	ingredients *recipe = (ingredients *) pvParameters;
+	while (1) {
+		while (recipe->espresso) {
+			curValvePos = VALVE_ESPRESSO;
+			changeValve = true;
+			STM_EVAL_LEDOn(LED_GREEN);
+			vTaskDelay(500/portTICK_RATE_MS);
+			STM_EVAL_LEDOff(LED_GREEN);
+			vTaskDelay(500/portTICK_RATE_MS);
+			recipe->espresso--;
+		}
+		
+		while (recipe -> milk) {
+			curValvePos = VALVE_MILK;
+			changeValve = true;
+			STM_EVAL_LEDOn(LED_GREEN);
+			vTaskDelay(500/portTICK_RATE_MS);
+			STM_EVAL_LEDOff(LED_GREEN);
+			vTaskDelay(500/portTICK_RATE_MS);
+			recipe->milk--;
+		}
+		
+		while (recipe -> choco) {
+			curValvePos = VALVE_CHOCO;
+			changeValve = true;
+			STM_EVAL_LEDOn(LED_GREEN);
+			vTaskDelay(500/portTICK_RATE_MS);
+			STM_EVAL_LEDOff(LED_GREEN);
+			vTaskDelay(500/portTICK_RATE_MS);
+			recipe->milk--;
+		}
+		
+		vTaskDelete(NULL);
+	}
+}
+
 void vServoTask(void *pvParameters) {
 	while(1) {
-		TIM4->CCR1 = curValvePos;
+		if (changeValve) {
+			TIM4->CCR1 = curValvePos;
+			changeValve = false;
+		} else {
+			vTaskDelay(10/portTICK_RATE_MS);
+		}
 	}
 }
 
