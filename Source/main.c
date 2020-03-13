@@ -92,9 +92,9 @@ typedef struct {
 } ingredients;
 
 // predefine timing for coffee machine
-int time_milk = 2;
-int time_espresso = 2;
-int time_choc = 2;
+int time_milk = 4;
+int time_espresso = 4;
+int time_choc = 4;
 int new_num_click = 0;
 
 uint16_t coffee_LED = 0;
@@ -113,7 +113,9 @@ void DisplayCountdown(void);
 
 
 #define STACK_SIZE_MIN	128	/* usStackDepth	- the stack size DEFINED IN WORDS (4 bytes).*/
-void vDispenseCoffee(void *pvParameters);
+void vDispenseLatte(void *pvParameters);
+void vDispenseEspresso(void *pvParameters);
+void vDispenseMocha(void *pvParameters);
 
 
 void InitLEDs() {
@@ -347,19 +349,25 @@ void UpdateBrewingStatus() {
 			drink.espresso = time_espresso;
 			drink.choco = time_choc;
 			coffee_LED = MOCHA;
+			
+			xTaskCreate( vDispenseMocha, (const char*)"Dispense Coffee",
+				STACK_SIZE_MIN, (void*) &drink, 0, NULL);
 		} else if (coffee_type == 1) {
 			// Espresso
 			drink.espresso = time_espresso;
 			coffee_LED = ESPRESSO;
+			
+			xTaskCreate( vDispenseEspresso, (const char*)"Dispense Coffee",
+				STACK_SIZE_MIN, (void*) &drink, 0, NULL);
 		} else if (coffee_type == 2) {
 			// Latte
 			drink.espresso = time_espresso;
 			drink.milk = time_milk;
 			coffee_LED = LATTE;
+			
+			xTaskCreate( vDispenseLatte, (const char*)"Dispense Coffee",
+				STACK_SIZE_MIN, (void*) &drink, 0, NULL);
 		}
-		
-		xTaskCreate( vDispenseCoffee, (const char*)"Dispense Coffee",
-			STACK_SIZE_MIN, (void*) &drink, 0, NULL);
 		
 		is_double_click = false;
 		is_single_click = false;
@@ -480,6 +488,7 @@ void ShowProgrammingLED() {
 }
 
 void ShowSelectingLED() {
+	LEDOff(GREEN);
 	if (coffee_type == 0) {
 		LEDOff(LATTE);
 		LEDOff(ESPRESSO);
@@ -667,52 +676,118 @@ void vMainTask(void *pvParameters) {
 	}
 }
 
-void vDispenseCoffee(void *pvParameters) {
+void vDispenseLatte(void *pvParameters) {
 	uint16_t LED = coffee_LED;
 	
 	int espresso = time_espresso;
 	int milk = time_milk;
-	int choc = time_choc;
 	while (1) {
 		while (espresso > 0) {
+			
+			if(curMode == making) {
+				LEDOff(ESPRESSO);
+				LEDOn(LATTE);
+				LEDOff(MOCHA);
+			}
 			curValvePos = VALVE_ESPRESSO;
 			changeValve = true;
 			STM_EVAL_LEDOn(LED_GREEN);
-			STM_EVAL_LEDOn(LED);
-			vTaskDelay(500/portTICK_RATE_MS);
+			vTaskDelay(1000/portTICK_RATE_MS);
 			STM_EVAL_LEDOff(LED_GREEN);
-			STM_EVAL_LEDOff(LED);
-			vTaskDelay(500/portTICK_RATE_MS);
+			vTaskDelay(1000/portTICK_RATE_MS);
 			timer_for_idle = 0;
 			espresso--;
 		}
 		
 		while (milk > 0) {
+			
+			if(curMode == making) {
+				LEDOff(ESPRESSO);
+				LEDOn(LATTE);
+				LEDOff(MOCHA);
+			}
 			curValvePos = VALVE_MILK;
 			changeValve = true;
 			STM_EVAL_LEDOn(LED_GREEN);
-			STM_EVAL_LEDOn(LED);
-			vTaskDelay(500/portTICK_RATE_MS);
+			vTaskDelay(1000/portTICK_RATE_MS);
 			STM_EVAL_LEDOff(LED_GREEN);
-			STM_EVAL_LEDOff(LED);
-			vTaskDelay(500/portTICK_RATE_MS);
+			vTaskDelay(1000/portTICK_RATE_MS);
 			timer_for_idle = 0;
 			milk--;
 		}
+			
+		vTaskDelete(NULL);
+	}
+}
+
+void vDispenseMocha(void *pvParameters) {
+	uint16_t LED = coffee_LED;
+	
+	int espresso = time_espresso;
+	int choc = time_choc;
+	while (1) {
+		while (espresso > 0) {
+			
+			if(curMode == making) {
+				LEDOff(ESPRESSO);
+				LEDOff(LATTE);
+				LEDOn(MOCHA);
+			}
+			
+			curValvePos = VALVE_ESPRESSO;
+			changeValve = true;
+			STM_EVAL_LEDOn(LED_GREEN);
+			vTaskDelay(1000/portTICK_RATE_MS);
+			STM_EVAL_LEDOff(LED_GREEN);
+			vTaskDelay(1000/portTICK_RATE_MS);
+			timer_for_idle = 0;
+			espresso--;
+		}
 		
 		while (choc > 0) {
+			
+			if(curMode == making) {
+				LEDOff(ESPRESSO);
+				LEDOff(LATTE);
+				LEDOn(MOCHA);
+			}
 			curValvePos = VALVE_CHOCO;
 			changeValve = true;
 			STM_EVAL_LEDOn(LED_GREEN);
-			STM_EVAL_LEDOn(LED);
-			vTaskDelay(500/portTICK_RATE_MS);
+			vTaskDelay(1000/portTICK_RATE_MS);
 			STM_EVAL_LEDOff(LED_GREEN);
-			STM_EVAL_LEDOff(LED);
-			vTaskDelay(500/portTICK_RATE_MS);
+			vTaskDelay(1000/portTICK_RATE_MS);
 			timer_for_idle = 0;
 			choc--;
 		}
 		
+		vTaskDelete(NULL);
+	}
+}
+
+void vDispenseEspresso(void *pvParameters) {
+	uint16_t LED = coffee_LED;
+	
+	int espresso = time_espresso;
+	while (1) {
+		while (espresso > 0) {
+			
+			if(curMode == making) {
+				LEDOn(ESPRESSO);
+				LEDOff(LATTE);
+				LEDOff(MOCHA);
+			}
+			
+			curValvePos = VALVE_ESPRESSO;
+			changeValve = true;
+			STM_EVAL_LEDOn(LED_GREEN);
+			vTaskDelay(1000/portTICK_RATE_MS);
+			STM_EVAL_LEDOff(LED_GREEN);
+			vTaskDelay(1000/portTICK_RATE_MS);
+			timer_for_idle = 0;
+			espresso--;
+		}
+			
 		vTaskDelete(NULL);
 	}
 }

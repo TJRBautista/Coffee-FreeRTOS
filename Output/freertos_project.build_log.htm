@@ -30,23 +30,17 @@ Rebuild target 'freertos_project'
 assembling startup_stm32f4xx.s...
 compiling system_stm32f4xx.c...
 compiling main.c...
-Source\main.c(610): warning:  #177-D: variable "curValvePos"  was declared but never referenced
+Source\main.c(619): warning:  #177-D: variable "curValvePos"  was declared but never referenced
                 uint32_t *curValvePos = (uint32_t *) pvParameters;
-Source\main.c(646): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+Source\main.c(655): warning:  #1035-D: single-precision operand implicitly converted to double-precision
                                 sample = (int16_t)(NOTEAMPLITUDE*filteredSaw);
-Source\main.c(681): warning:  #188-D: enumerated type mixed with another type
-                        STM_EVAL_LEDOn(LED);
-Source\main.c(684): warning:  #188-D: enumerated type mixed with another type
-                        STM_EVAL_LEDOff(LED);
-Source\main.c(694): warning:  #188-D: enumerated type mixed with another type
-                        STM_EVAL_LEDOn(LED);
-Source\main.c(697): warning:  #188-D: enumerated type mixed with another type
-                        STM_EVAL_LEDOff(LED);
-Source\main.c(707): warning:  #188-D: enumerated type mixed with another type
-                        STM_EVAL_LEDOn(LED);
-Source\main.c(710): warning:  #188-D: enumerated type mixed with another type
-                        STM_EVAL_LEDOff(LED);
-Source\main.c: 8 warnings, 0 errors
+Source\main.c(680): warning:  #177-D: variable "LED"  was declared but never referenced
+        uint16_t LED = coffee_LED;
+Source\main.c(724): warning:  #177-D: variable "LED"  was declared but never referenced
+        uint16_t LED = coffee_LED;
+Source\main.c(769): warning:  #177-D: variable "LED"  was declared but never referenced
+        uint16_t LED = coffee_LED;
+Source\main.c: 5 warnings, 0 errors
 compiling discoveryf4utils.c...
 compiling stm32f4xx_it.c...
 compiling codec.c...
@@ -93,9 +87,9 @@ compiling stm32f4xx_tim.c...
 compiling stm32f4xx_usart.c...
 compiling stm32f4xx_wwdg.c...
 linking...
-Program Size: Code=26784 RO-data=488 RW-data=300 ZI-data=78852  
+Program Size: Code=27104 RO-data=488 RW-data=300 ZI-data=78852  
 FromELF: creating hex file...
-".\Output\freertos_project.axf" - 0 Error(s), 8 Warning(s).
+".\Output\freertos_project.axf" - 0 Error(s), 5 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -118,7 +112,7 @@ Package Vendor: Keil
 <h2>Collection of Component Files used:</h2>
 
    * Component: ARM::CMSIS:CORE:5.3.0
-Build Time Elapsed:  00:01:20
+Build Time Elapsed:  00:01:14
 </pre>
 </body>
 </html>
