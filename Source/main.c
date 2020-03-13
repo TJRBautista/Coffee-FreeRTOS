@@ -65,11 +65,11 @@ bool is_double_click = false;
 bool is_long_click = false; // need to hold the button for more than 3 seconds
 
 // the state for the machine
-typedef enum MODE {programming, brewing, neutral} mode;
+typedef enum MODE {programming, programming_update_timing, brewing, neutral} mode;
 mode curMode;
 bool countdown_timer_has_started = false;
 //bool is_programming_state = false; // this state allows user to change the timing for different size of coffee
-bool is_selecting = false;
+//bool is_selecting = false;
 
 uint16_t error_LED_1 = 0;
 uint16_t error_LED_2 = 0;
@@ -79,10 +79,15 @@ int num_blink = 0;
 int coffee_size = 0;
 const int MAX_SIZE_OPTION = 3;
 
+int ingredient_type = 0;
+const int MAX_INGREDIENT_OPTION = 3;
+
+bool display_ingredient_predef_timing = false;
+
 // predefine timing for coffee machine
-uint16_t time_small = 2;
-uint16_t time_medium = 4;
-uint16_t time_ex_large = 6;
+uint16_t time_milk = 2;
+uint16_t time_espresso = 4;
+uint16_t time_choc = 6;
 uint16_t new_num_click = 0;
 
 fir_8 filt;
@@ -93,6 +98,7 @@ bool sound_init = false;
 
 
 void UpdateMachineStatus(void);
+void DisplayCountdown(void);
 
 
 void InitLEDs() {
@@ -214,7 +220,7 @@ void TIM2_IRQHandler() {
 		if ( timer_for_idle > IDLE_TIME * TIMER_2_FREQUENCY ) {
 			curMode = neutral;
 			timer_for_idle = 0;
-			is_selecting = false;
+			//is_selecting = false;
 		}
 		
 //		if (start_sound_timer) {
@@ -259,62 +265,52 @@ bool CanUpdateClickState() {
 					timer_for_button_hold >= MIN_PRESS_TIME * TIMER_2_FREQUENCY);
 }
 
-void UpdateCoffeeTiming() {
-	if (coffee_size == 0) time_small = new_num_click;
-	else if (coffee_size == 1) time_medium = new_num_click;
-	else if (coffee_size == 2) time_ex_large = new_num_click;
+void UpdateIngredientTiming() {
+	if (ingredient_type == 0) time_milk = new_num_click;
+	else if (ingredient_type == 1) time_espresso = new_num_click;
+	else if (ingredient_type == 2) time_choc = new_num_click;
+}
+
+void UpdateTimingStatus() {
+	within_double_click_period = (timer_for_button_released <= (DOUBLE_CLICK_TIME * TIMER_2_FREQUENCY));
+	
+	if (is_single_click && !within_double_click_period) {
+		new_num_click++;
+		is_single_click = false;
+	} else if (is_double_click) {
+		// do nothing for now
+		is_double_click = false;
+	} else if (is_long_click) {
+		curMode = programming;
+		is_long_click = false;
+		is_single_click = false;
+		is_double_click = false;
+		is_button_up = false;
+
+		if(new_num_click)
+			UpdateIngredientTiming();
+	}
 }
 
 void UpdateProgrammingStatus() {
-	if (is_selecting) {
-		within_double_click_period = (timer_for_button_released <= (DOUBLE_CLICK_TIME * TIMER_2_FREQUENCY));
+	within_double_click_period = (timer_for_button_released <= (DOUBLE_CLICK_TIME * TIMER_2_FREQUENCY));
+	
+	if (is_single_click && !within_double_click_period) {
+		ingredient_type = (ingredient_type + 1) % MAX_INGREDIENT_OPTION;
+		is_single_click = false;
+	} else if (is_double_click) {
+		display_ingredient_predef_timing = true;
+		curMode = programming_update_timing;
+		new_num_click = 0;
+		is_double_click = false;
 		
-		if (is_single_click && !within_double_click_period) {
-			coffee_size = (coffee_size + 1) % MAX_SIZE_OPTION;
-			is_single_click = false;
-		} else if (is_double_click) {
-			//try to reprogram
-			is_selecting = false;
-			new_num_click = 0;
-			timer_for_idle = 0;
-			countdown_timer_has_started = false;
-			is_double_click = false;
-		} else if (is_long_click) {
-			curMode = brewing;
-			is_long_click = false;
-			is_double_click = false;
-			is_single_click = false;
-			is_button_up = true;
-		}
-	} else if (countdown_timer_has_started && num_blink <= 0) {
-		// only respond to the click when LED finishes blinking
-		within_double_click_period = (timer_for_button_released <= (DOUBLE_CLICK_TIME * TIMER_2_FREQUENCY));
-		
-		if (is_single_click && !within_double_click_period) {
-			new_num_click++;
-			is_single_click = false;
-		} else if(is_long_click) {
-			if ( new_num_click > 0) {
-				UpdateCoffeeTiming();
-				new_num_click = 0;
-				curMode = neutral;
-			}
-			is_long_click = false;
-			is_double_click = false;
-			is_single_click = false;
-			is_button_up = true;
-		} else if(is_double_click)  {
-			// if the user press too fast, then it will count as 2 clicks 
-			new_num_click+=2;
-			is_double_click = false;
-		}
-	} else {
-		// reset the button click
-		// when displaying the LED, program should ignore clicks.
-
-		if (is_single_click) is_single_click = false;
-		if (is_long_click) is_long_click = false;
-		if (is_double_click) is_double_click = false;
+		DisplayCountdown();
+	} else if (is_long_click) {
+		curMode = brewing;
+		is_long_click = false;
+		is_single_click = false;
+		is_double_click = false;
+		is_button_up = false;
 	}
 }
 
@@ -327,58 +323,32 @@ const uint32_t VALVE_CHOCO = 2100;
 uint32_t curValvePos = VALVE_OFF;
 
 void UpdateBrewingStatus() {
-	if (is_selecting) {
-		within_double_click_period = (timer_for_button_released <= (DOUBLE_CLICK_TIME * TIMER_2_FREQUENCY));
-		
-		if ((is_single_click && !within_double_click_period)) {
-			coffee_size = (coffee_size + 1) % MAX_SIZE_OPTION;
-			is_single_click = false;
-			
-			//testing response of motor with a single click
-			curValvePos = (curValvePos == VALVE_OFF) ? VALVE_MILK : VALVE_OFF;
-			changeValve = true;
-		} else if (is_double_click) {
-			//try to give coffee
-			is_selecting = false;
-			countdown_timer_has_started = false;
-			is_double_click = false;
-		} else if (is_long_click) {
-			curMode = programming;
-			is_long_click = false;
-			is_double_click = false;
-			is_single_click = false;
-			is_button_up = true;
-		}
-	} else if (countdown_timer_has_started && num_blink <= 0) {
-		LEDOn(RED);
-		LEDOn(ORANGE);
-		LEDOn(BLUE);
-		//output_sound = true;
-		timer_for_sound = 0;
-		output_sound = true;
-		curMode = neutral;
+
+	within_double_click_period = (timer_for_button_released <= (DOUBLE_CLICK_TIME * TIMER_2_FREQUENCY));
+	
+	if(is_single_click && !within_double_click_period) {
+		coffee_type = (coffee_type + 1) % MAX_SIZE_OPTION;
+		is_single_click = false;
+	} else if (is_double_click) {
+		// TODO create coffee
+		is_double_click = false;
 	} else if (is_long_click) {
 		curMode = programming;
-		is_single_click = false;
 		is_long_click = false;
+		is_single_click = false;
 		is_double_click = false;
-		is_button_up = true;
-		countdown_timer_has_started = true;
-		is_selecting = true;
-	} else {
-		if (is_single_click) is_single_click = false;
-		if (is_double_click) is_double_click = false;
+		is_button_up = false;
 	}
 }
 
 void UpdateNeutralStatus() {
 	if (is_single_click) {
 		curMode = brewing;
-		is_selecting = true;
+		//is_selecting = true;
 		is_single_click = false;
 	} else if (is_long_click) {
 		curMode = programming;
-		is_selecting = true;
+		//is_selecting = true;
 		is_long_click = false;
 		is_double_click = false;
 		is_single_click = false;
@@ -387,35 +357,35 @@ void UpdateNeutralStatus() {
 }
 void UpdateMachineStatus() {
 	switch (curMode) {
-		case programming:
-			UpdateProgrammingStatus();
+		case neutral:
+			UpdateNeutralStatus();
 			break;
 		case brewing:
 			UpdateBrewingStatus();
 			break;
-		case neutral:
-			UpdateNeutralStatus();
+		case programming:
+			UpdateProgrammingStatus();
+			break;
+		case programming_update_timing:
+			UpdateTimingStatus();
 			break;
 	};
 }
 
 void DisplayCountdown() {
 	//choose which light to blink
-	if (curMode == brewing)
-		display_LED_1 = GREEN;
-	else {
-		switch(coffee_size) {
-			case 0:
-				display_LED_1 = SMALL;
-				break;
-			case 1:
-				display_LED_1 = MEDIUM;
-				break;
-			case 2:
-				display_LED_1 = EXTRA_LARGE;
-				break;
-		}
+	switch(coffee_type) {
+		case 0:
+			display_LED_1 = MOCHA;
+			break;
+		case 1:
+			display_LED_1 = ESPRESSO;
+			break;
+		case 2:
+			display_LED_1 = LATTE;
+			break;
 	}
+
 	
 	//set countdown
 	if ( coffee_size == 0) {
@@ -430,47 +400,52 @@ void DisplayCountdown() {
 	countdown_timer_has_started = true;
 }
 
+void ShowUpdateTimingLED() {
+	if (ingredient_type == 0) {
+			display_LED_1 = MOCHA;
+	} else if (ingredient_type == 1) {
+			display_LED_1 = ESPRESSO;
+	} else if (ingredient_type == 2) {
+			display_LED_1 = LATTE;
+	}
+	
+	LEDOn(GREEN);
+	if ( is_button_up ) LEDOn(display_LED_1);
+	else LEDOff(display_LED_1);
+	
+}
+
 void ShowProgrammingLED() {
-	// every time when trying to reprogram, it should tell user the pre-defined time first
-	if (!countdown_timer_has_started) {
-		DisplayCountdown();
+	if (ingredient_type == 0) {
+		LEDOff(LATTE);
+		LEDOff(ESPRESSO);
+		LEDOn(MOCHA);
+	} else if (ingredient_type == 1) {
+		LEDOff(MOCHA);
+		LEDOff(LATTE);
+		LEDOn(ESPRESSO);
+	} else if (ingredient_type == 2) {
+		LEDOff(ESPRESSO);
+		LEDOff(MOCHA);
+		LEDOn(LATTE);
 	}
-	
-	if ( num_blink <= 0 ) { 
-		LEDOn(GREEN);
-		if ( is_button_up ) LEDOn(display_LED_1);
-		else LEDOff(display_LED_1);
-	}
+	LEDOn(GREEN);
+
 }
 
-void ShowBrewingLED() {
-	if (!countdown_timer_has_started)
-		DisplayCountdown();
-	
-	if ( num_blink <= 0 ) { 
-		//curMode = neutral;
-	}
-}
-
-void ShowSizeLED() {
-	if (curMode == programming)
-		LEDOn(GREEN);
-	//commented out to test dispense task, remove in actual code
-//	else
-//		LEDOff(GREEN);
-	
-	if (coffee_size == 0) {
-		LEDOff(EXTRA_LARGE);
-		LEDOff(MEDIUM);
-		LEDOn(SMALL);
-	} else if (coffee_size == 1) {
-		LEDOff(SMALL);
-		LEDOff(EXTRA_LARGE);
-		LEDOn(MEDIUM);
-	} else if (coffee_size == 2) {
-		LEDOff(MEDIUM);
-		LEDOff(SMALL);
-		LEDOn(EXTRA_LARGE);
+void ShowSelectingLED() {
+	if (coffee_type == 0) {
+		LEDOff(LATTE);
+		LEDOff(ESPRESSO);
+		LEDOn(MOCHA);
+	} else if (coffee_type == 1) {
+		LEDOff(MOCHA);
+		LEDOff(LATTE);
+		LEDOn(ESPRESSO);
+	} else if (coffee_type == 2) {
+		LEDOff(ESPRESSO);
+		LEDOff(MOCHA);
+		LEDOn(LATTE);
 	}
 }
 
@@ -483,14 +458,28 @@ void ShowNeutralLED() {
 }
 
 void ShowLED() {
-	if (is_selecting)
-		ShowSizeLED();
-	else if (curMode == programming)
-		ShowProgrammingLED();
-	else if (curMode == brewing)
-		ShowBrewingLED();
-	else
-		ShowNeutralLED();
+	switch (curMode) {
+		case neutral:
+			ShowNeutralLED();
+			break;
+		case brewing:
+			ShowSelectingLED();
+			break;
+		case programming:
+			ShowProgrammingLED();
+			break;
+		case programming_update_timing:
+			ShowUpdateTimingLED();
+	};
+	
+//	if (is_selecting)
+//		ShowSizeLED();
+//	else if (curMode == programming)
+//		ShowProgrammingLED();
+//	else if (curMode == brewing)
+//		ShowBrewingLED();
+//	else
+//		ShowNeutralLED();
 }
 
 //*******
