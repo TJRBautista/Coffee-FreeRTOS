@@ -75,7 +75,7 @@ uint16_t error_LED_1 = 0;
 uint16_t display_LED_1 = 0;
 int num_blink = 0;
 
-int coffee_size = 0;
+int coffee_type = 0;
 const int MAX_SIZE_OPTION = 3;
 
 // predefine timing for coffee machine
@@ -249,10 +249,12 @@ bool CanUpdateClickState() {
 					timer_for_button_hold >= MIN_PRESS_TIME * TIMER_2_FREQUENCY);
 }
 
+//TODO: this assignment no longer need to update coffee timeing, but needs to update each
+// ingredient time
 void UpdateCoffeeTiming() {
-	if (coffee_size == 0) time_small = new_num_click;
-	else if (coffee_size == 1) time_medium = new_num_click;
-	else if (coffee_size == 2) time_ex_large = new_num_click;
+	if (coffee_type == 0) time_small = new_num_click;
+	else if (coffee_type == 1) time_medium = new_num_click;
+	else if (coffee_type == 2) time_ex_large = new_num_click;
 }
 
 void UpdateProgrammingStatus() {
@@ -260,7 +262,7 @@ void UpdateProgrammingStatus() {
 		within_double_click_period = (timer_for_button_released <= (DOUBLE_CLICK_TIME * TIMER_2_FREQUENCY));
 		
 		if (is_single_click && !within_double_click_period) {
-			coffee_size = (coffee_size + 1) % MAX_SIZE_OPTION;
+			coffee_type = (coffee_type + 1) % MAX_SIZE_OPTION;
 			is_single_click = false;
 		} else if (is_double_click) {
 			//try to reprogram
@@ -313,7 +315,7 @@ void UpdateBrewingStatus() {
 		within_double_click_period = (timer_for_button_released <= (DOUBLE_CLICK_TIME * TIMER_2_FREQUENCY));
 		
 		if ((is_single_click && !within_double_click_period)) {
-			coffee_size = (coffee_size + 1) % MAX_SIZE_OPTION;
+			coffee_type = (coffee_type + 1) % MAX_SIZE_OPTION;
 			is_single_click = false;
 		} else if (is_double_click) {
 			//try to give coffee
@@ -383,7 +385,7 @@ void DisplayCountdown() {
 	if (curMode == brewing)
 		display_LED_1 = GREEN;
 	else {
-		switch(coffee_size) {
+		switch(coffee_type) {
 			case 0:
 				display_LED_1 = MOCHA;
 				break;
@@ -397,13 +399,13 @@ void DisplayCountdown() {
 	}
 	
 	//set countdown
-	if ( coffee_size == 0) {
+	if ( coffee_type == 0) {
 		num_blink = time_small * 2;
 	}
-	else if (coffee_size == 1) {
+	else if (coffee_type == 1) {
 		num_blink = time_medium * 2;
 	}
-	else if (coffee_size == 2) {
+	else if (coffee_type == 2) {
 		num_blink = time_ex_large * 2;
 	}
 	countdown_timer_has_started = true;
@@ -437,15 +439,15 @@ void ShowSizeLED() {
 	else
 		LEDOff(GREEN);
 	
-	if (coffee_size == 0) {
+	if (coffee_type == 0) {
 		LEDOff(LATTE);
 		LEDOff(ESPRESSO);
 		LEDOn(MOCHA);
-	} else if (coffee_size == 1) {
+	} else if (coffee_type == 1) {
 		LEDOff(MOCHA);
 		LEDOff(LATTE);
 		LEDOn(ESPRESSO);
-	} else if (coffee_size == 2) {
+	} else if (coffee_type == 2) {
 		LEDOff(ESPRESSO);
 		LEDOff(MOCHA);
 		LEDOn(LATTE);

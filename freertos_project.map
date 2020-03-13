@@ -1424,7 +1424,7 @@ Image Symbol Table
     error_LED_1                              0x20000056   Data           2  main.o(.data)
     display_LED_1                            0x20000058   Data           2  main.o(.data)
     num_blink                                0x2000005c   Data           4  main.o(.data)
-    coffee_size                              0x20000060   Data           4  main.o(.data)
+    coffee_type                              0x20000060   Data           4  main.o(.data)
     time_small                               0x20000064   Data           2  main.o(.data)
     time_medium                              0x20000066   Data           2  main.o(.data)
     time_ex_large                            0x20000068   Data           2  main.o(.data)
