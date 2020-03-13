@@ -1,7 +1,7 @@
 .\output\port.o: FreeRTOS\portable\RVDS\ARM_CM4F\port.c
 .\output\port.o: .\FreeRTOS\include\FreeRTOS.h
-.\output\port.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
-.\output\port.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\output\port.o: D:\ARM\ARMCC\Bin\..\include\stddef.h
+.\output\port.o: D:\ARM\ARMCC\Bin\..\include\stdint.h
 .\output\port.o: .\FreeRTOS\include\FreeRTOSConfig.h
 .\output\port.o: .\Libraries\CMSIS\Device\ST\STM32F4xx\Include\stm32f4xx.h
 .\output\port.o: .\Libraries\CMSIS\Include\core_cm4.h

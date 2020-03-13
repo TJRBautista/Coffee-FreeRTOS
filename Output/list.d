@@ -1,8 +1,8 @@
 .\output\list.o: FreeRTOS\list.c
-.\output\list.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
+.\output\list.o: D:\ARM\ARMCC\Bin\..\include\stdlib.h
 .\output\list.o: .\FreeRTOS\include\FreeRTOS.h
-.\output\list.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
-.\output\list.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\output\list.o: D:\ARM\ARMCC\Bin\..\include\stddef.h
+.\output\list.o: D:\ARM\ARMCC\Bin\..\include\stdint.h
 .\output\list.o: .\FreeRTOS\include\FreeRTOSConfig.h
 .\output\list.o: .\Libraries\CMSIS\Device\ST\STM32F4xx\Include\stm32f4xx.h
 .\output\list.o: .\Libraries\CMSIS\Include\core_cm4.h

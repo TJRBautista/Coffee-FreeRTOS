@@ -11,6 +11,8 @@
 #include "croutine.h"
 #include "main.h"
 #include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
 //******************************************************************************
 
 //*******
@@ -38,9 +40,9 @@ const uint16_t RED = GPIO_Pin_14;
 const uint16_t BLUE = GPIO_Pin_15;
 
 // size option for coffee
-const uint16_t SMALL = GPIO_Pin_13; // orange
-const uint16_t MEDIUM = GPIO_Pin_14; // red
-const uint16_t EXTRA_LARGE = GPIO_Pin_15; // blue
+const uint16_t MOCHA = GPIO_Pin_13; // orange
+const uint16_t ESPRESSO = GPIO_Pin_14; // red
+const uint16_t LATTE = GPIO_Pin_15; // blue
 
 // define few timing for events
 const uint16_t LONG_PRESS_TIME = 2; // 3 seconds holding for long press.
@@ -65,7 +67,7 @@ bool is_double_click = false;
 bool is_long_click = false; // need to hold the button for more than 3 seconds
 
 // the state for the machine
-typedef enum MODE {programming, programming_update_timing, brewing, neutral} mode;
+typedef enum MODE {programming, programming_update_timing, brewing, neutral, making} mode;
 mode curMode;
 bool countdown_timer_has_started = false;
 //bool is_programming_state = false; // this state allows user to change the timing for different size of coffee
@@ -76,19 +78,28 @@ uint16_t error_LED_2 = 0;
 uint16_t display_LED_1 = 0;
 int num_blink = 0;
 
-int coffee_size = 0;
-const int MAX_SIZE_OPTION = 3;
+int coffee_type = 0;
+const int MAX_TYPE_OPTION = 3;
 
 int ingredient_type = 0;
 const int MAX_INGREDIENT_OPTION = 3;
 
-bool display_ingredient_predef_timing = false;
+
+typedef struct {
+	int espresso;
+	int milk;
+	int choco;
+} ingredients;
 
 // predefine timing for coffee machine
-uint16_t time_milk = 2;
-uint16_t time_espresso = 4;
-uint16_t time_choc = 6;
-uint16_t new_num_click = 0;
+int time_milk = 2;
+int time_espresso = 2;
+int time_choc = 2;
+int new_num_click = 0;
+
+uint16_t coffee_LED = 0;
+
+bool display_ingredient_predef_timing = false;
 
 fir_8 filt;
 bool output_sound = false;
@@ -99,6 +110,10 @@ bool sound_init = false;
 
 void UpdateMachineStatus(void);
 void DisplayCountdown(void);
+
+
+#define STACK_SIZE_MIN	128	/* usStackDepth	- the stack size DEFINED IN WORDS (4 bytes).*/
+void vDispenseCoffee(void *pvParameters);
 
 
 void InitLEDs() {
@@ -222,16 +237,7 @@ void TIM2_IRQHandler() {
 			timer_for_idle = 0;
 			//is_selecting = false;
 		}
-		
-//		if (start_sound_timer) {
-//			//vTaskSuspend(xMasterThreadHandler);
-//			timer_for_sound++;
-//			output_sound = timer_for_sound <= SOUND_OUTPUT * TIMER_2_FREQUENCY;
-//			if (!output_sound) {
-//				start_sound_timer = false;
-//				timer_for_sound = 0;
-//			}
-//		}
+	
 		if(output_sound)
 		{
 			timer_for_sound++;
@@ -285,7 +291,7 @@ void UpdateTimingStatus() {
 		is_long_click = false;
 		is_single_click = false;
 		is_double_click = false;
-		is_button_up = false;
+		is_button_up = true;
 
 		if(new_num_click)
 			UpdateIngredientTiming();
@@ -299,18 +305,21 @@ void UpdateProgrammingStatus() {
 		ingredient_type = (ingredient_type + 1) % MAX_INGREDIENT_OPTION;
 		is_single_click = false;
 	} else if (is_double_click) {
-		display_ingredient_predef_timing = true;
-		curMode = programming_update_timing;
+		//display_ingredient_predef_timing = true;
+
 		new_num_click = 0;
 		is_double_click = false;
 		
 		DisplayCountdown();
+		while(num_blink){}
+		curMode = programming_update_timing;
 	} else if (is_long_click) {
 		curMode = brewing;
 		is_long_click = false;
 		is_single_click = false;
 		is_double_click = false;
-		is_button_up = false;
+		is_button_up = true;
+		LEDOff(GREEN);
 	}
 }
 
@@ -327,17 +336,40 @@ void UpdateBrewingStatus() {
 	within_double_click_period = (timer_for_button_released <= (DOUBLE_CLICK_TIME * TIMER_2_FREQUENCY));
 	
 	if(is_single_click && !within_double_click_period) {
-		coffee_type = (coffee_type + 1) % MAX_SIZE_OPTION;
+		coffee_type = (coffee_type + 1) % MAX_TYPE_OPTION;
 		is_single_click = false;
-	} else if (is_double_click) {
-		// TODO create coffee
+	} else if (is_double_click) {	
+		
+		ingredients drink = {0, 0, 0};
+		//memset(&drink, 0, sizeof(ingredients));
+		if (coffee_type == 0) {
+			//Mocha
+			drink.espresso = time_espresso;
+			drink.choco = time_choc;
+			coffee_LED = MOCHA;
+		} else if (coffee_type == 1) {
+			// Espresso
+			drink.espresso = time_espresso;
+			coffee_LED = ESPRESSO;
+		} else if (coffee_type == 2) {
+			// Latte
+			drink.espresso = time_espresso;
+			drink.milk = time_milk;
+			coffee_LED = LATTE;
+		}
+		
+		xTaskCreate( vDispenseCoffee, (const char*)"Dispense Coffee",
+			STACK_SIZE_MIN, (void*) &drink, 0, NULL);
+		
 		is_double_click = false;
+		is_single_click = false;
+		curMode = making;
 	} else if (is_long_click) {
 		curMode = programming;
 		is_long_click = false;
 		is_single_click = false;
 		is_double_click = false;
-		is_button_up = false;
+		is_button_up = true;
 	}
 }
 
@@ -355,6 +387,17 @@ void UpdateNeutralStatus() {
 		is_button_up = true;
 	}
 }
+
+void UpdateMakingStatus() {
+	if(is_single_click) {
+		curMode = brewing;
+		is_single_click = false;
+	} else if (is_long_click) {
+		is_long_click = false;
+	} else if( is_double_click) {
+		is_double_click = false;
+	}
+}
 void UpdateMachineStatus() {
 	switch (curMode) {
 		case neutral:
@@ -369,12 +412,15 @@ void UpdateMachineStatus() {
 		case programming_update_timing:
 			UpdateTimingStatus();
 			break;
+		case making:
+			UpdateMakingStatus();
+			break;
 	};
 }
 
 void DisplayCountdown() {
 	//choose which light to blink
-	switch(coffee_type) {
+	switch(ingredient_type) {
 		case 0:
 			display_LED_1 = MOCHA;
 			break;
@@ -388,16 +434,16 @@ void DisplayCountdown() {
 
 	
 	//set countdown
-	if ( coffee_size == 0) {
-		num_blink = time_small * 2;
+	if ( ingredient_type == 0) {
+		num_blink = time_milk * 2;
 	}
-	else if (coffee_size == 1) {
-		num_blink = time_medium * 2;
+	else if (ingredient_type == 1) {
+		num_blink = time_espresso * 2;
 	}
-	else if (coffee_size == 2) {
-		num_blink = time_ex_large * 2;
+	else if (ingredient_type == 2) {
+		num_blink = time_choc * 2;
 	}
-	countdown_timer_has_started = true;
+  //	countdown_timer_has_started = true;
 }
 
 void ShowUpdateTimingLED() {
@@ -454,7 +500,11 @@ void ShowNeutralLED() {
 	LEDOn(ORANGE);
 	LEDOn(BLUE);
 	//commented out to test dispense task, remove in actual code
-	//LEDOff(GREEN);
+	LEDOff(GREEN);
+}
+
+void showMakingLED()
+{
 }
 
 void ShowLED() {
@@ -470,27 +520,13 @@ void ShowLED() {
 			break;
 		case programming_update_timing:
 			ShowUpdateTimingLED();
+		case making:
+			showMakingLED();
+			break;
 	};
-	
-//	if (is_selecting)
-//		ShowSizeLED();
-//	else if (curMode == programming)
-//		ShowProgrammingLED();
-//	else if (curMode == brewing)
-//		ShowBrewingLED();
-//	else
-//		ShowNeutralLED();
 }
 
 //*******
-
-// variables for servo
-//const uint32_t VALVE_OFF = 001;
-//const uint32_t VALVE_ESPRESSO = 1000;
-//const uint32_t VALVE_MILK = 1500;
-//const uint32_t VALVE_CHOCO = 2100;
-//uint32_t curValvePos = VALVE_OFF;
-//bool changeValve = false;
 
 void initSound(void);
 float updateFilter(fir_8* filt, float val);
@@ -503,36 +539,8 @@ void SetupPWM(void);
 void vButtonTask(void *pvParameters);
 void vSoundTask(void *pvParameters);
 void vMainTask(void *pvParameters);
-void vDispenseCoffee(void *pvParameters);
 
 void vServoTask(void *pvParameters);
-
-//volatile uint32_t msTicks; //counts 1ms timeTicks
-//void SysTick_Handler(void) {
-//	msTicks++;
-//}
-
-////Delays number of Systicks (happens every 1 ms)
-//static void Delay(__IO uint32_t dlyTicks){
-//	uint32_t curTicks = msTicks;
-//	while ((msTicks - curTicks) < dlyTicks);
-//}
-//void setSysTick(void){
-//	if (SysTick_Config(SystemCoreClock / 1000)) {
-//		while (1){};
-//	}
-//}
-
-typedef struct {
-	int espresso;
-	int milk;
-	int choco;
-} ingredients;
-	
-ingredients latte = {3, 2, 0};
-
-
-#define STACK_SIZE_MIN	128	/* usStackDepth	- the stack size DEFINED IN WORDS (4 bytes).*/
 
 TaskHandle_t xHandleBlue = NULL;
 
@@ -585,8 +593,11 @@ int main(void)
 		STACK_SIZE_MIN, (void *) NULL, 1, NULL);
 	xTaskCreate( vMainTask, (const char*)"main project Task",
 		STACK_SIZE_MIN, NULL, 0, NULL);
-	xTaskCreate( vDispenseCoffee, (const char*)"Dispense Coffee",
-		STACK_SIZE_MIN, (void *) &latte, 0, NULL);
+	
+//	
+//	ingredients latte = {3, 2, 0};
+//	xTaskCreate( vDispenseCoffee, (const char*)"Dispense Coffee",
+//		STACK_SIZE_MIN, (void *) &latte, 0, NULL);
 	
 	vTaskStartScheduler();
 }
@@ -657,36 +668,49 @@ void vMainTask(void *pvParameters) {
 }
 
 void vDispenseCoffee(void *pvParameters) {
-	ingredients *recipe = (ingredients *) pvParameters;
+	uint16_t LED = coffee_LED;
+	
+	int espresso = time_espresso;
+	int milk = time_milk;
+	int choc = time_choc;
 	while (1) {
-		while (recipe->espresso) {
+		while (espresso > 0) {
 			curValvePos = VALVE_ESPRESSO;
 			changeValve = true;
 			STM_EVAL_LEDOn(LED_GREEN);
+			STM_EVAL_LEDOn(LED);
 			vTaskDelay(500/portTICK_RATE_MS);
 			STM_EVAL_LEDOff(LED_GREEN);
+			STM_EVAL_LEDOff(LED);
 			vTaskDelay(500/portTICK_RATE_MS);
-			recipe->espresso--;
+			timer_for_idle = 0;
+			espresso--;
 		}
 		
-		while (recipe -> milk) {
+		while (milk > 0) {
 			curValvePos = VALVE_MILK;
 			changeValve = true;
 			STM_EVAL_LEDOn(LED_GREEN);
+			STM_EVAL_LEDOn(LED);
 			vTaskDelay(500/portTICK_RATE_MS);
 			STM_EVAL_LEDOff(LED_GREEN);
+			STM_EVAL_LEDOff(LED);
 			vTaskDelay(500/portTICK_RATE_MS);
-			recipe->milk--;
+			timer_for_idle = 0;
+			milk--;
 		}
 		
-		while (recipe -> choco) {
+		while (choc > 0) {
 			curValvePos = VALVE_CHOCO;
 			changeValve = true;
 			STM_EVAL_LEDOn(LED_GREEN);
+			STM_EVAL_LEDOn(LED);
 			vTaskDelay(500/portTICK_RATE_MS);
 			STM_EVAL_LEDOff(LED_GREEN);
+			STM_EVAL_LEDOff(LED);
 			vTaskDelay(500/portTICK_RATE_MS);
-			recipe->milk--;
+			timer_for_idle = 0;
+			choc--;
 		}
 		
 		vTaskDelete(NULL);

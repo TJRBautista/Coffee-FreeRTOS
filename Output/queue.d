@@ -1,9 +1,9 @@
 .\output\queue.o: FreeRTOS\queue.c
-.\output\queue.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
-.\output\queue.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
+.\output\queue.o: D:\ARM\ARMCC\Bin\..\include\stdlib.h
+.\output\queue.o: D:\ARM\ARMCC\Bin\..\include\string.h
 .\output\queue.o: .\FreeRTOS\include\FreeRTOS.h
-.\output\queue.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
-.\output\queue.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\output\queue.o: D:\ARM\ARMCC\Bin\..\include\stddef.h
+.\output\queue.o: D:\ARM\ARMCC\Bin\..\include\stdint.h
 .\output\queue.o: .\FreeRTOS\include\FreeRTOSConfig.h
 .\output\queue.o: .\Libraries\CMSIS\Device\ST\STM32F4xx\Include\stm32f4xx.h
 .\output\queue.o: .\Libraries\CMSIS\Include\core_cm4.h
